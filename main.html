@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Квест: Завдання #1</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- JS Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- Google Fonts: Montserrat -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #311042 100%);
+            min-height: 100vh;
+        }
+
+        /* Glassmorphic card styling */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.07);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+        }
+
+        /* Shake animation for incorrect answer */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-10px); }
+            40%, 80% { transform: translateX(10px); }
+        }
+
+        .animate-shake {
+            animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+        }
+
+        /* Pulse glow animation */
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 0 20px rgba(168, 85, 247, 0.4); }
+            50% { box-shadow: 0 0 35px rgba(168, 85, 247, 0.8); }
+        }
+
+        .glow-effect {
+            animation: pulseGlow 3s infinite;
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center p-4 text-slate-100 min-h-screen">
+
+    <main class="w-full max-w-lg">
+        <!-- Main Card -->
+        <div id="questCard" class="glass-card rounded-3xl p-6 sm:p-10 transition-all duration-300 relative overflow-hidden">
+            
+            <!-- Decorative Glow BG elements -->
+            <div class="absolute -top-12 -left-12 w-36 h-36 bg-purple-500/20 rounded-full blur-2xl pointer-events-none"></div>
+            <div class="absolute -bottom-12 -right-12 w-36 h-36 bg-indigo-500/20 rounded-full blur-2xl pointer-events-none"></div>
+
+            <!-- Header Header -->
+            <div class="text-center mb-8 relative z-10">
+                <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-purple-500/20 text-purple-300 mb-4 border border-purple-500/30 glow-effect">
+                    <i class="fa-solid font-bold text-2xl fa-compass"></i>
+                </div>
+                <span class="block text-xs uppercase tracking-widest font-semibold text-purple-400 mb-1">Пригодницький Квест</span>
+                <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-purple-300 via-pink-200 to-indigo-200">
+                    Завдання
+                </h1>
+            </div>
+
+            <!-- Form Container -->
+            <div class="space-y-6 relative z-10">
+                <div>
+                    <label for="answerInput" class="block text-sm font-semibold text-slate-300 mb-2">
+                        <i class="fa-solid fa-key text-purple-400 mr-2"></i>Введи по-батькові сюди:
+                    </label>
+                    <div class="relative">
+                        <input 
+                            type="text" 
+                            id="answerInput" 
+                            placeholder="Введіть по-батькові..." 
+                            autocomplete="off"
+                            class="w-full px-5 py-4 rounded-xl bg-slate-900/60 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition duration-200 text-lg shadow-inner"
+                        />
+                        <button 
+                            type="button" 
+                            id="clearBtn"
+                            onclick="clearInput()"
+                            class="hidden absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition"
+                            aria-label="Очистити поле"
+                        >
+                            <i class="fa-solid fa-circle-xmark text-lg"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <button 
+                    id="submitBtn" 
+                    onclick="checkAnswer()" 
+                    class="w-full py-4 px-6 rounded-xl font-bold text-lg bg-gradient-to-r from-purple-600 via-indigo-600 to-purple-700 hover:from-purple-500 hover:to-indigo-500 text-white shadow-lg shadow-purple-900/40 active:scale-[0.98] transition-all duration-200 flex items-center justify-center space-x-2 cursor-pointer"
+                >
+                    <span>Перевірити</span>
+                    <i class="fa-solid fa-arrow-right text-sm"></i>
+                </button>
+            </div>
+
+            <!-- Feedback / Result Area -->
+            <div id="resultBox" class="mt-6 hidden transition-all duration-300 relative z-10">
+                <!-- Success State -->
+                <div id="successCard" class="hidden p-5 rounded-2xl bg-emerald-950/60 border border-emerald-500/40 text-emerald-200 space-y-3">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 rounded-full bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center shrink-0">
+                            <i class="fa-solid fa-circle-check text-xl text-emerald-400"></i>
+                        </div>
+                        <h3 class="font-bold text-lg text-emerald-300">Вітаємо! Відповідь вірна!</h3>
+                    </div>
+                    <p id="successMessage" class="text-emerald-100/90 text-sm sm:text-base leading-relaxed pl-13">
+                        Правильно! <strong>Володимирович</strong> — це кодове слово, шукай у закладі кучерявого Дмитра, назви йому кодове слово та забери наступну підказку! 🔍✨
+                    </p>
+                </div>
+
+                <!-- Error State -->
+                <div id="errorCard" class="hidden p-5 rounded-2xl bg-rose-950/60 border border-rose-500/40 text-rose-200 space-y-2">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-9 h-9 rounded-full bg-rose-500/20 border border-rose-400/40 flex items-center justify-center shrink-0">
+                            <i class="fa-solid fa-circle-xmark text-lg text-rose-400"></i>
+                        </div>
+                        <h3 class="font-bold text-rose-300">Ой, помилка!</h3>
+                    </div>
+                    <p class="text-rose-100/90 text-sm sm:text-base pl-12">
+                        Неправда! Спробуй ще раз, ми віримо в тебе 💪
+                    </p>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Small Footer Hint -->
+        <p class="text-center text-slate-500 text-xs mt-6">
+            Квест розроблено для незабутніх пригод 🚀
+        </p>
+    </main>
+
+    <script>
+        const CORRECT_ANSWER = "володимирович";
+
+        const inputEl = document.getElementById('answerInput');
+        const clearBtn = document.getElementById('clearBtn');
+        const cardEl = document.getElementById('questCard');
+        const resultBox = document.getElementById('resultBox');
+        const successCard = document.getElementById('successCard');
+        const errorCard = document.getElementById('errorCard');
+
+        // Toggle clear input button visibility
+        inputEl.addEventListener('input', () => {
+            if (inputEl.value.trim().length > 0) {
+                clearBtn.classList.remove('hidden');
+            } else {
+                clearBtn.classList.add('hidden');
+            }
+        });
+
+        // Trigger action on Enter key
+        inputEl.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                checkAnswer();
+            }
+        });
+
+        function clearInput() {
+            inputEl.value = '';
+            clearBtn.classList.add('hidden');
+            inputEl.focus();
+        }
+
+        function triggerConfetti() {
+            if (typeof confetti === 'function') {
+                confetti({
+                    particleCount: 100,
+                    spread: 70,
+                    origin: { y: 0.6 }
+                });
+            }
+        }
+
+        function checkAnswer() {
+            // Normalize input: trim spaces and convert to lower case
+            const userValue = inputEl.value.trim().toLowerCase();
+
+            if (!userValue) {
+                inputEl.focus();
+                return;
+            }
+
+            // Remove previous shake animation
+            cardEl.classList.remove('animate-shake');
+
+            // Force browser reflow to allow re-triggering animation
+            void cardEl.offsetWidth;
+
+            resultBox.classList.remove('hidden');
+
+            if (userValue === CORRECT_ANSWER) {
+                // Hide Error, Show Success
+                errorCard.classList.add('hidden');
+                successCard.classList.remove('hidden');
+
+                // Add success glow border to card
+                cardEl.classList.add('border-emerald-500/50');
+                cardEl.classList.remove('border-rose-500/50');
+
+                // Trigger celebratory confetti
+                triggerConfetti();
+            } else {
+                // Hide Success, Show Error
+                successCard.classList.add('hidden');
+                errorCard.classList.remove('hidden');
+
+                // Add error shake & border
+                cardEl.classList.add('animate-shake', 'border-rose-500/50');
+                cardEl.classList.remove('border-emerald-500/50');
+            }
+        }
+
+        // Auto-focus input on page load
+        window.onload = () => {
+            inputEl.focus();
+        };
+    </script>
+</body>
+</html>
